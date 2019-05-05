@@ -6,9 +6,13 @@ The script *dataset.py* contains the DatasetPreProcessor class.
 # How to make use of this class
 
 ## Step 1 : To create an instance
-dpp = DatasetPreProcessor(corpus = 'semcor')
+dpp = DatasetPreProcessor(corpus = 'semcor', first_time = False)
 
 corpus = 'semcor' / 'masc' (for now only 'semcor')
+
+first_time = Set to True if you are running for the first time
+
+Set to False otherwise (will load from the pickle object)
 
 ## Step 2 : To initialize the object with all the information you need
 dpp.get_train_validation_split(split = <insert_value_here>)
