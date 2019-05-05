@@ -5,6 +5,8 @@ The script *dataset.py* contains the DatasetPreProcessor class.
 
 # How to make use of this class
 
+## Step 0 : Make sure the pickle files are in the same directory as the *dataset.py* script
+
 ## Step 1 : To create an instance (loads with all the information required)
 dpp = DatasetPreProcessor(corpus = 'semcor', first_time = False)
 
