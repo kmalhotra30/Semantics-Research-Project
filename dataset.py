@@ -42,7 +42,17 @@ class DatasetPreProcessor:
     
     self.vocab = set(self.corpus.words())
     
-    self.w2i = {w : i for i, w in enumerate(list(self.vocab))}
+    self.w2i = {w : i + 4 for i, w in enumerate(list(self.vocab))}
+    self.w2i['<PAD>'] = 0
+    self.w2i['<UNK>'] = 1
+    self.w2i['<SOS>'] = 2
+    self.w2i['<EOS>'] = 3
+
+    self.i2w = {i + 4 : w for i, w in enumerate(list(self.vocab))}
+    self.i2w[0] = '<PAD>'
+    self.i2w[1] = '<UNK>'
+    self.i2w[2] = '<SOS>'
+    self.i2w[3] = '<EOS>'
   
   def get_document(self, doc_id):
     
