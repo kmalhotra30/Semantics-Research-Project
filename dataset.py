@@ -34,10 +34,12 @@ class DatasetPreProcessor:
     vocab = set(self.corpus.words(doc_ids))
     
     # Word to index mapping
-    w2i = {w : i for i, w in enumerate(list(vocab))}
+    w2i = {w : i + 4 for i, w in enumerate(list(vocab))}
+    w2i['<PAD>'], w2i['<UNK>'], w2i['<SOS>'], w2i['<EOS>'] = 0, 1, 2, 3
     
     # Index to word mapping
-    i2w = {i : w for i, w in enumerate(list(vocab))}
+    i2w = {i + 4 : w for i, w in enumerate(list(vocab))}
+    i2w[0], i2w[1], i2w[2], i2w[3] = '<PAD>', '<UNK>', '<SOS>', '<EOS>'
     
     return vocab, w2i, i2w
   
