@@ -86,7 +86,7 @@ is_document -> If you want document-level context
 
 Returns a list of lists where each list is a word, sentence or document-level context
 
-### To get the word embeddings of the train / validation sets
+### To get the (pruned) word embeddings of the train / validation sets
 #### This function is dependent on the split (I would suggest to run this function on Colab)
 dpp.get_embeddings(word_to_index_mapping, embed_dim = 300, embed_type = 'glove')
 
