@@ -1,3 +1,15 @@
+# Importing Libraries
+import nltk
+import numpy as np
+import torch
+import math
+import torchnlp
+from torchnlp.word_to_vector import GloVe
+import pickle
+nltk.download('semcor')
+nltk.download('wordnet')
+nltk.download('punkt')
+
 class DatasetPreProcessor:
   
   def __init__(self, corpus = 'semcor', first_time = False):
