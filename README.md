@@ -72,6 +72,13 @@ dpp.get_words(document_id)
 ### To obtain the synset defintion given a synset string
 dpp.get_definition(synset_string)
 
+### To get all the senses of a word present in the list of document
+dpp.get_wsd_senses(word, list_of_doc_ids)
+
+#### Returns a list of unique word senses if word exists in the list of documents
+otherwise
+#### Returns an empty list
+
 ### To get the word, sentence or document-level context of a particular word sense
 dpp.get_wsd_context(dataset_type, word, word_sense, context_num = 0, is_word = False, is_sentence = True, is_document = False)
 
@@ -85,35 +92,41 @@ context_num -> the amount of context (word or sentence-level) before and after t
 
 (Default = 0)
 
-is_word -> If you want word-level context
+#### is_word -> If you want word-level context
 
-(Default = False)
+###### Returns a dictionary containing 'masked' and 'unmasked' keys
 
-Output: List of List of Lists 
+'masked' and 'unmasked' contain a list of list of lists
 
-First List is the overall collection
+First List -> Corresponds to collection of contexts across documents
 
-Second List consists of the word contexts from a document
+Second List -> Corresponds to contexts found in each document
 
-Third List consists of the word contexts corresponding to each occurrence of the word in the document
+Third List -> Corresponds to contexts found for each occurrence of the word in that document
 
-is_sentence -> If you want sentence-level context
+'masked' - If you want the contexts excluding the focus word
 
-(Default = True)
+'unmasked' - If you want the contexts including the focus word
 
-Output: List of List of Lists 
+#### is_sentence -> If you want sentence-level context
 
-First List is the overall collection
+##### Returns a dictionary containing 'masked' and 'unmasked' keys
 
-Second List consists of the sentence contexts from a document
+'masked' and 'unmasked' contain a list of list of lists
 
-Third List consists of the sentence contexts corresponding to each occurrence of the word in the document
+First List -> Corresponds to collection of contexts across documents
 
-is_document -> If you want document-level context
+Second List -> Corresponds to contexts found in each document
 
-(Default = False)
+Third List -> Corresponds to contexts found for the sentence containing the word in that document
 
-Returns a list of lists where each list corresponds to the entire document
+'masked' - If you want the contexts excluding the focus sentence
+
+'unmasked' - If you want the contexts including the focus sentence
+
+#### is_document -> If you want document-level context
+
+###### Returns a List of lists where each secondary list corresponds to an entire document
 
 ### To get the (pruned) word embeddings of the train / validation sets
 dpp.get_embeddings(word_to_index_mapping, embed_dim = 300, embed_type = 'glove', first_time = False)
