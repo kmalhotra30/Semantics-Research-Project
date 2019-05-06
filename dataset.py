@@ -6,6 +6,7 @@ import math
 import torchnlp
 from torchnlp.word_to_vector import GloVe
 import pickle
+import random
 nltk.download('semcor')
 nltk.download('wordnet')
 nltk.download('punkt')
@@ -97,23 +98,32 @@ class DatasetPreProcessor:
   
   def get_context_sentences(self, doc_id, sent_id, context_num):
     
-    temp_context = []
+    temp_context_masked = []
+
+    temp_context_unmasked = []
     
     for i in range(-context_num, context_num + 1):
       
       if sent_id + i < 0 or sent_id + i >= len(self.corpus.sents(doc_id)):
         
-        temp_context.append('<PAD>')
+        temp_context_masked.append('<PAD>')
+
+        temp_context_unmasked.append('<PAD>')
         
       else:
         
-        temp_context.append(self.document[doc_id]['i2s'][sent_id + i])
+        if sent_id + i != sent_id:
+          temp_context_masked.append(self.document[doc_id]['i2s'][sent_id + i])
+        
+        temp_context_unmasked.append(self.document[doc_id]['i2s'][sent_id + i])       
     
-    return temp_context
+    return temp_context_masked, temp_context_unmasked
   
   def get_context_words(self, doc_id, word, context_num):
     
-    word_context = []
+    word_context_masked = []
+
+    word_context_unmasked = []
     
     doc_words = self.corpus.words(doc_id)
     
@@ -121,22 +131,44 @@ class DatasetPreProcessor:
     
     for occurrence in word_occurrences:
       
-      temp_context = []
+      temp_context_masked = []
+
+      temp_context_unmasked = []
       
       for i in range(-context_num, context_num + 1):
         
         if occurrence + i < 0 or occurrence + i >= len(doc_words):
         
-          temp_context.append('<PAD>')
+          temp_context_masked.append('<PAD>')
+          
+          temp_context_unmasked.append('<PAD>')
         
         else:
         
-          temp_context.append(doc_words[occurrence + i])
+          if occurrence + i != occurrence:
+            temp_context_masked.append(doc_words[occurrence + i])
+          
+          temp_context_unmasked.append(doc_words[occurrence + i])
       
-      word_context.append(temp_context)
+      word_context_masked.append(temp_context_masked)
+
+      word_context_unmasked.append(temp_context_unmasked)
     
-    return word_context
-        
+    return word_context_masked, word_context_unmasked
+  
+  def get_wsd_senses(self, word, doc_id_list):
+
+    word_senses = []
+
+    for doc_id in doc_id_list:
+
+      if word in self.document[doc_id]['wsd']:
+        word_sense_list = list(self.document[doc_id]['wsd'][word])
+
+        word_senses.extend(word_sense_list)
+    
+    return list(set(word_senses))
+
   def get_wsd_context(self, dataset_type, word, word_sense, context_num = 0, is_word = False, is_sentence = True, is_document = False):
     
     if is_document == True:
@@ -146,7 +178,7 @@ class DatasetPreProcessor:
     
     elif is_sentence == True:
       
-      context = []
+      context = {"masked" : [], "unmasked" : []}
       
       for doc_id in self.doc_ids[dataset_type]:
         
@@ -157,11 +189,15 @@ class DatasetPreProcessor:
             sentence_ids = self.document[doc_id]['wsd'][word][word_sense]
             
             for sent_id in sentence_ids:
-              context.append(self.get_context_sentences(doc_id, sent_id, context_num))
+              masked, unmasked = self.get_context_sentences(doc_id, sent_id, context_num)
+
+              context["masked"].append(masked)
+
+              context["unmasked"].append(unmasked)
     
     elif is_word == True:
       
-      context = []
+      context = {"masked" : [], "unmasked" : []}
       
       for doc_id in self.doc_ids[dataset_type]:
         
@@ -169,7 +205,11 @@ class DatasetPreProcessor:
           
           if word_sense in self.document[doc_id]['wsd'][word]:
             
-            context.append(self.get_context_words(doc_id, word, context_num))
+            masked, unmasked = self.get_context_words(doc_id, word, context_num)
+
+            context["masked"].append(masked)
+
+            context["unmasked"].append(unmasked)
             
     return context
   
@@ -211,10 +251,14 @@ class DatasetPreProcessor:
     self.doc_ids = {}
     
     split_index = math.floor(self.num_docs * split)
+
+    doc_id_list = list(self.corpus.fileids())
     
-    self.doc_ids['train'] = self.corpus.fileids()[0 : split_index]
+    random.shuffle(doc_id_list, random.random)
+
+    self.doc_ids['train'] = doc_id_list[0 : split_index]
     
-    self.doc_ids['dev'] = self.corpus.fileids()[split_index : ]
+    self.doc_ids['dev'] = doc_id_list[split_index : ]
     
   def preprocess_corpus(self):
     
