@@ -140,13 +140,16 @@ class DatasetPreProcessor:
       self.embedding = torch.nn.Embedding(len(word_to_index), embed_dim)
 
       weight_matrix = np.zeros((len(word_to_index), embed_dim))
-
+      
       weight_matrix[1, :] = np.random.uniform(-0.05, 0.05, 300).astype(np.float32)
 
       weight_matrix[2:4, :] = np.random.randn(1, embed_dim)
 
       for word in word_to_index:
         
+        if word in ['<PAD>', '<UNK>', '<SOS>', '<EOS>']:
+          continue
+          
         if word not in embed_model:
             weight_matrix[word_to_index[word], :] = weight_matrix[1, :]
         
@@ -165,6 +168,9 @@ class DatasetPreProcessor:
 
   # Function to get the context around a focus sentence   
   def get_context(self, text_id, sent_id, context_window):
+    
+    if isinstance(sent_id, str):
+        sent_id = int(re.sub("\D", "", sent_id))
     
     temp_context = {}
     
