@@ -164,7 +164,7 @@ class DatasetPreProcessor:
           self.embedding = pickle.load(f)
 
   # Function to get the context around a focus sentence   
-  def get_context(self, text_id, sent_id, context_window = 2):
+  def get_context(self, text_id, sent_id, context_window):
     
     temp_context = {}
     
