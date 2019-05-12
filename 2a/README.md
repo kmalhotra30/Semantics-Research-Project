@@ -48,7 +48,7 @@ dpp.split_dataset # Dictionary containing the new split datasets
 ## Step 3
 ### To get the context sentences around a focus sentence from the text that it belongs to
 ```python
-context, context_labels = dpp.get_context(text_id, sent_id, context_window)
+context, context_labels, focus_sentence_index = dpp.get_context(text_id, sent_id, context_window)
 text_id is a string
 sent_id is an integer
 context_window # Parameter to fetch context_window sentences before and after the focus sentence <sent_id>
@@ -61,4 +61,5 @@ context # Dictionary containing the masked and unmasked versions of the context 
 context_labels # Dictionary containing the metaphor labels of the masked and unmasked versions of the contexts of the focus sentence
   context_labels['masked'] # List of Lists where each sub-list contains the labels of each word in the context sentences EXCLUDING those of the focus sentence
   context_labels['unmasked'] # List of Lists where each sub-list contains the labels of each word in the context sentences INCLUDING those of the focus sentence
+focus_sentence_index # Index corresponding to the focus sentence in context['unmasked'] and context_labels['unmasked']
 ```
