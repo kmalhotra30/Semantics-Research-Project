@@ -202,9 +202,12 @@ class DatasetPreProcessor:
         
         temp_context_unmasked.append(self.texts[text_id][sorted_sent_ids[sent_id_idx + i]]['token_list'])
         temp_context_labels_unmasked.append(self.texts[text_id][sorted_sent_ids[sent_id_idx + i]]['labels'])
+
+        if sent_id_idx + i == sent_id_idx:
+          focus_sentence_index = len(temp_context_unmasked) - 1
     
     temp_context['masked'], temp_context['unmasked'] = temp_context_masked, temp_context_unmasked
     
     temp_context_labels['masked'], temp_context_labels['unmasked'] = temp_context_labels_masked, temp_context_labels_unmasked
     
-    return temp_context, temp_context_labels
+    return temp_context, temp_context_labels, focus_sentence_index
