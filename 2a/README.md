@@ -1,6 +1,6 @@
 # How to use the DatasetPreProcessor class in dataset.py
 ```python
-# Make sure that the vuamc_corpus_train.csv, vuamc_corpus_test.csv and vuamc_glove_vectors.pckl are in the same folder as dataset.py
+# Make sure that the vuamc_corpus_train.csv, vuamc_corpus_test.csv, vuamc_glove_vectors.pckl and vuamc_elmo_dict.pckl files are in the same folder as dataset.py
 ```
 ## Step 1
 
@@ -21,6 +21,7 @@ dpp.texts # Dictionary containing information for each text in the corpus
     1 indicates metaphor
   <text_id> is a string
   <sent_id> is an integer
+dpp.text_id_mapping # Dictionary mapping a text_id to a unique integer
 dpp.w2i # Dictionary mapping words to their indices
   dpp.w2i['<PAD>'] = 0
   dpp.w2i['<UNK>'] = 1
@@ -48,7 +49,7 @@ dpp.split_dataset # Dictionary containing the new split datasets
 ## Step 3
 ### To get the context sentences around a focus sentence from the text that it belongs to
 ```python
-context, context_labels, focus_sentence_index = dpp.get_context(text_id, sent_id, context_window)
+context, context_labels, focus_sentence_index, context_sent_ids = dpp.get_context(text_id, sent_id, context_window)
 text_id is a string
 sent_id is an integer
 context_window # Parameter to fetch context_window sentences before and after the focus sentence <sent_id>
@@ -62,4 +63,20 @@ context_labels # Dictionary containing the metaphor labels of the masked and unm
   context_labels['masked'] # List of Lists where each sub-list contains the labels of each word in the context sentences EXCLUDING those of the focus sentence
   context_labels['unmasked'] # List of Lists where each sub-list contains the labels of each word in the context sentences INCLUDING those of the focus sentence
 focus_sentence_index # Index corresponding to the focus sentence in context['unmasked'] and context_labels['unmasked']
-```
+context_sent_ids # Dictionary containing the ids of the context sentences in the masked and unmasked versions
+  context_sent_ids['masked'] # List containing the ids of the context sentences EXCLUDING the focus sentence
+  context_sent_ids['unmasked'] # List containing the ids of the context sentences INCLUDING the focus sentence
+  ```
+  
+  ## Step 4
+  ### To get the glove + elmo embeddings of each token in each sentence
+  ```python
+  dpp.get_elmo_embedding_dict(folder_path, first_time = False)
+  folder_path # Path to the folder containing vuamc_elmo_dict.pckl
+  first_time # True if you want to create the pickled dictionary, False otherwise
+  ```
+  
+  #### Variables Created
+  ```python
+  dpp.elmo_embed_dict # Dictionary containing the glove + elmo embedding of each token in each sentence for each text
+    dpp.elmo_embed_dict[<text_id>]
