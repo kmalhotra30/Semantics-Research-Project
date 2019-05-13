@@ -9,6 +9,8 @@ import torchnlp
 import torch
 from torchnlp.word_to_vector import GloVe
 import pickle
+import ast
+from allennlp.modules.elmo import Elmo, batch_to_ids
 nltk.download('punkt')
 
 # Defining the DatasetPreProcessor class
@@ -19,6 +21,9 @@ class DatasetPreProcessor:
     
     # Corpus name (For naming the files while saving)
     self.corpus_name = "vuamc"
+    
+    # Seed
+    self.seed = 42
     
     # Retrieve vocabulary and information for all the texts 
     self.get_text_info()
@@ -56,11 +61,11 @@ class DatasetPreProcessor:
     
     for dataset_type in dataset_types:
       
-      self.original_dataset[dataset_type] = pd.read_csv('vuamc_corpus_' + dataset_type + '.csv')
+      self.original_dataset[dataset_type] = pd.read_csv('vuamc_corpus_' + dataset_type + '.csv', encoding = 'latin-1')
       
       self.original_dataset[dataset_type] = self.original_dataset[dataset_type].dropna()
      
-    temp = shuffle(self.original_dataset['train'])
+    temp = shuffle(self.original_dataset['train'], random_state = self.seed)
     
     split_index = math.floor(len(temp) * train_dev_split)
     
@@ -98,9 +103,9 @@ class DatasetPreProcessor:
     
     self.texts = {}
     
-    train_corpus = pd.read_csv('vuamc_corpus_train.csv')
+    train_corpus = pd.read_csv('vuamc_corpus_train.csv', encoding = 'latin-1')
     
-    test_corpus = pd.read_csv('vuamc_corpus_test.csv')
+    test_corpus = pd.read_csv('vuamc_corpus_test.csv', encoding = 'latin-1')
     
     train_corpus = train_corpus.dropna()
     
@@ -201,8 +206,9 @@ class DatasetPreProcessor:
           temp_context_labels_masked.append(self.texts[text_id][sorted_sent_ids[sent_id_idx + i]]['labels'])
         
         temp_context_unmasked.append(self.texts[text_id][sorted_sent_ids[sent_id_idx + i]]['token_list'])
+        
         temp_context_labels_unmasked.append(self.texts[text_id][sorted_sent_ids[sent_id_idx + i]]['labels'])
-
+        
         if sent_id_idx + i == sent_id_idx:
           focus_sentence_index = len(temp_context_unmasked) - 1
     
@@ -211,3 +217,114 @@ class DatasetPreProcessor:
     temp_context_labels['masked'], temp_context_labels['unmasked'] = temp_context_labels_masked, temp_context_labels_unmasked
     
     return temp_context, temp_context_labels, focus_sentence_index
+  
+  # Function to get the elmo embedding dictionary
+  def get_elmo_embedding_dict(self, folder_path, first_time = False):
+    
+    if first_time:
+      self.elmo_embed_dict = {}
+
+      comb_set = pd.concat([self.original_dataset['train'], self.original_dataset['test']], axis = 0, ignore_index = True)
+
+      comb_set_rows = len(comb_set)
+
+      batch_size = 64
+
+      num_iterations = math.ceil(comb_set_rows / batch_size)
+
+      options_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_options.json"
+
+      weight_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5"
+
+      elmo = Elmo(options_file, weight_file, 1, dropout = 0)
+
+      for x in range(num_iterations):
+
+        start_index = x * batch_size
+
+        end_index = min((x + 1) * batch_size, comb_set_rows)
+
+        comb_set_slice = pd.DataFrame(comb_set[start_index : end_index])
+
+        comb_set_slice_txt_sent_len = []
+
+        comb_set_slice_sentences = []
+
+        for index, row in comb_set_slice.iterrows():
+
+          tokenized_sent = nltk.word_tokenize(row['sentence_txt'])
+
+          comb_set_slice_txt_sent_len.append([row['txt_id'], row['sentence_id'], len(tokenized_sent), tokenized_sent])
+
+          comb_set_slice_sentences.append(tokenized_sent)
+
+        comb_set_slice_char_ids = batch_to_ids(comb_set_slice_sentences)
+
+        comb_set_slice_embeddings = elmo(comb_set_slice_char_ids)
+
+        for j in range(len(comb_set_slice_txt_sent_len)):
+
+          text_id = comb_set_slice_txt_sent_len[j][0]
+
+          sent_id = comb_set_slice_txt_sent_len[j][1]
+
+          if isinstance(sent_id, str):
+            sent_id = int(re.sub("\D", "", sent_id))
+
+          sent_len = comb_set_slice_txt_sent_len[j][2]
+
+          tokenized_sent = comb_set_slice_txt_sent_len[j][3]
+
+          for k in range(-1, sent_len):
+
+            if text_id not in self.elmo_embed_dict:
+              self.elmo_embed_dict[text_id] = {}
+
+            if sent_id not in self.elmo_embed_dict[text_id]:
+              self.elmo_embed_dict[text_id][sent_id] = {}
+
+            if k not in self.elmo_embed_dict[text_id][sent_id]:
+              self.elmo_embed_dict[text_id][sent_id][k] = {}
+
+            if k == -1:
+
+              glove_embedding = self.embedding(torch.LongTensor([0]))
+
+              elmo_embedding = torch.zeros(1, 1024)
+
+              self.elmo_embed_dict[text_id][sent_id][k]['glove_elmo'] = list(torch.cat((glove_embedding, elmo_embedding), dim = 1).detach().numpy().squeeze()) # (1, 1324)
+
+              #self.elmo_embed_dict[text_id][sent_id][k]['elmo'] = elmo_embedding # (1, 1024)
+
+              #self.elmo_embed_dict[text_id][sent_id][k]['glove'] = glove_embedding # (1, 300)
+
+              self.elmo_embed_dict[text_id][sent_id][k]['word'] = '<PAD>'
+
+            else:
+
+              glove_embedding = self.embedding(torch.LongTensor([self.w2i[tokenized_sent[k]]]))
+
+              elmo_embedding = comb_set_slice_embeddings['elmo_representations'][0][j][k].view(1, 1024)
+
+              self.elmo_embed_dict[text_id][sent_id][k]['glove_elmo'] = list(torch.cat((glove_embedding, elmo_embedding), dim = 1).detach().numpy().squeeze()) # (1, 1324)
+
+              #self.elmo_embed_dict[text_id][sent_id][k]['elmo'] = elmo_embedding # (1, 1024)
+
+              #self.elmo_embed_dict[text_id][sent_id][k]['glove'] = glove_embedding # (1, 300)
+
+              self.elmo_embed_dict[text_id][sent_id][k]['word'] = tokenized_sent[k]
+
+      self.elmo_embed_dict["-1"] = {}
+      self.elmo_embed_dict["-1"][-1] = {}
+      self.elmo_embed_dict["-1"][-1][-1] = {}
+      self.elmo_embed_dict["-1"][-1][-1]["glove_elmo"] = list(torch.zeros(1, 1324).detach().numpy().squeeze())
+      #self.elmo_embed_dict["-1"][-1][-1]["elmo"] = torch.zeros(1, 1024)
+      #self.elmo_embed_dict["-1"][-1][-1]["glove"] = torch.zeros(1, 300)
+      self.elmo_embed_dict["-1"][-1][-1]["word"] = '<PAD>'
+      
+      with open(folder_path + self.corpus_name + "_elmo_dict.pckl", 'wb') as f:
+         pickle.dump(self.elmo_embed_dict, f)
+        
+    else:
+       with open(folder_path + self.corpus_name + "_elmo_dict.pckl", 'rb') as f:
+          self.elmo_embed_dict = pickle.load(f)
