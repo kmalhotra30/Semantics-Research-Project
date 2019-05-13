@@ -142,6 +142,8 @@ class DatasetPreProcessor:
       self.vocab = self.vocab.union(set(self.texts[row['txt_id']][sent_id]['token_list']))
       
       self.texts[row['txt_id']][sent_id]['labels'] = list(map(self.is_metaphor, self.texts[row['txt_id']][sent_id]['token_list']))
+    
+    self.text_id_mapping_reverse = {v : k for k, v in self.text_id_mapping.items()}
       
   # Function to get the word embeddings
   def get_embeddings(self, word_to_index, embed_dim = 300, embed_type = 'glove', first_time = False):
