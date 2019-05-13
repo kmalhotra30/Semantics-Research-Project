@@ -326,5 +326,14 @@ class DatasetPreProcessor:
          pickle.dump(self.elmo_embed_dict, f)
         
     else:
-       with open(folder_path + self.corpus_name + "_elmo_dict.pckl", 'rb') as f:
+      
+      with open(folder_path + self.corpus_name + "_elmo_dict.pckl", 'rb') as f:
           self.elmo_embed_dict = pickle.load(f)
+       
+      for text_id in self.elmo_embed_dict.keys():
+        
+        for sent_id in self.elmo_embed_dict[text_id].keys():
+          
+          for word_id in self.elmo_embed_dict[text_id][sent_id].keys():
+            
+            self.elmo_embed_dict[text_id][sent_id][word_id]['glove_elmo'].requires_grad = False     
