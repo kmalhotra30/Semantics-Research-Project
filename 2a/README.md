@@ -13,6 +13,7 @@ dpp = DatasetPreProcessor(first_time = False) # If you have already created the 
 #### Variables created after performing this step
 ```python
 dpp.corpus_name = 'vuamc' # Corpus name (For naming the files while saving)
+dpp.seed = 42 # Seed while performing random operations and shuffling
 dpp.vocab # Vocabulary of the entire corpus
 dpp.texts # Dictionary containing information for each text in the corpus
   dpp.texts[<text_id>][<sent_id>]['token_list'] returns a list of tokens in the sentence <sent_id> belonging to text <text_id>
@@ -79,4 +80,12 @@ context_sent_ids # Dictionary containing the ids of the context sentences in the
   #### Variables Created
   ```python
   dpp.elmo_embed_dict # Dictionary containing the glove + elmo embedding of each token in each sentence for each text
-    dpp.elmo_embed_dict[<text_id>]
+    dpp.elmo_embed_dict[<text_id>] # Dictionary containing the sentence ids belonging to the text
+    dpp.elmo_embed_dict[<text_id>][<sent_id>] # Dictionary containing the word ids belonging to that sentence
+    dpp.elmo_embed_dict[<text_id>][<sent_id>][<word_id>] # Dictionary containing the glove + elmo embeddings and the word itself
+      dpp.elmo_embed_dict[<text_id>][<sent_id>][<word_id>]['glove_elmo'] # glove + elmo embedding
+      dpp.elmo_embed_dict[<text_id>][<sent_id>][<word_id>]['word'] # word
+  <text_id> is a string
+  <sent_id> is an integer
+  <word_id> is an integer
+ ```
