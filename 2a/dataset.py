@@ -103,6 +103,8 @@ class DatasetPreProcessor:
     
     self.texts = {}
     
+    self.text_id_mapping = {}
+    
     train_corpus = pd.read_csv('vuamc_corpus_train.csv', encoding = 'latin-1')
     
     test_corpus = pd.read_csv('vuamc_corpus_test.csv', encoding = 'latin-1')
@@ -112,12 +114,19 @@ class DatasetPreProcessor:
     test_corpus = test_corpus.dropna()
     
     comb = pd.concat([train_corpus, test_corpus], axis = 0, ignore_index = True)
+    
+    counter = 0
       
     for index, row in comb.iterrows():
 
       if row['txt_id'] not in self.texts:
 
         self.texts[row['txt_id']] = {}
+        
+      if row['txt_id'] not in self.text_id_mapping:
+        
+        self.text_id_mapping[row['txt_id']] = counter
+        counter += 1
 
       sent_id = row['sentence_id']
       
