@@ -115,6 +115,8 @@ class DatasetPreProcessor:
     
     comb = pd.concat([train_corpus, test_corpus], axis = 0, ignore_index = True)
     
+    self.text_id_mapping["-1"] = -1
+    
     counter = 0
       
     for index, row in comb.iterrows():
@@ -142,7 +144,7 @@ class DatasetPreProcessor:
       self.vocab = self.vocab.union(set(self.texts[row['txt_id']][sent_id]['token_list']))
       
       self.texts[row['txt_id']][sent_id]['labels'] = list(map(self.is_metaphor, self.texts[row['txt_id']][sent_id]['token_list']))
-    
+   
     self.text_id_mapping_reverse = {v : k for k, v in self.text_id_mapping.items()}
       
   # Function to get the word embeddings
