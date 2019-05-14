@@ -107,10 +107,10 @@ class DatasetPreProcessor:
     
     train_corpus = pd.read_csv('vuamc_corpus_train.csv', encoding = 'latin-1')
     
-    test_corpus = pd.read_csv('vuamc_corpus_test.csv', encoding = 'latin-1')
-    
     train_corpus = train_corpus.dropna()
     
+    test_corpus = pd.read_csv('vuamc_corpus_test.csv', encoding = 'latin-1')
+  
     test_corpus = test_corpus.dropna()
     
     comb = pd.concat([train_corpus, test_corpus], axis = 0, ignore_index = True)
@@ -144,9 +144,44 @@ class DatasetPreProcessor:
       self.vocab = self.vocab.union(set(self.texts[row['txt_id']][sent_id]['token_list']))
       
       self.texts[row['txt_id']][sent_id]['labels'] = list(map(self.is_metaphor, self.texts[row['txt_id']][sent_id]['token_list']))
-   
-    self.text_id_mapping_reverse = {v : k for k, v in self.text_id_mapping.items()}
       
+    test_corpus_verb_labels = pd.read_csv('verb_tokens_test.csv', encoding = 'latin-1', header = None)
+    
+    test_corpus_all_pos_labels = pd.read_csv('all_pos_tokens_test.csv', encoding = 'latin-1', header = None)
+    
+    test_corpus_verb_labels = test_corpus_verb_labels.dropna()
+    
+    test_corpus_all_pos_labels = test_corpus_all_pos_labels.dropna()
+    
+    test_corpus_labels = pd.concat([test_corpus_verb_labels, test_corpus_all_pos_labels], axis = 0, ignore_index = True)
+    
+    for index, row in test_corpus_labels.iterrows():
+      
+      token_id = row[0]
+      
+      text_sent_word_id = token_id.split('_')
+      
+      text_id = text_sent_word_id[0]
+      
+      sent_id = text_sent_word_id[1]
+      
+      if isinstance(sent_id, str):
+        sent_id = int(re.sub("\D", "", sent_id))
+      
+      word_id = text_sent_word_id[2]
+      
+      if isinstance(word_id, str):
+        word_id = int(re.sub("\D", "", word_id))
+      
+      label = row[1]
+      
+      if isinstance(label, str):
+        label = int(re.sub("\D", "", label))
+        
+      self.texts[text_id][sent_id]['labels'][word_id - 1] = label
+      
+    self.text_id_mapping_reverse = {v : k for k, v in self.text_id_mapping.items()}
+    
   # Function to get the word embeddings
   def get_embeddings(self, word_to_index, embed_dim = 300, embed_type = 'glove', first_time = False):
 
