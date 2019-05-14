@@ -49,9 +49,9 @@ class DatasetPreProcessor:
       if word[0] == 'M' and word[1] == '_':
         return 1
     return 0
-    
+  
   # Function to get the train, dev, and test splits
-  def get_original_split_datasets(self, train_dev_split = 0.7):
+  def get_original_split_datasets(self, train_dev_split = 0.9):
     
     dataset_types = ['train', 'test']
     
@@ -76,7 +76,95 @@ class DatasetPreProcessor:
     self.split_dataset['test'] = pd.DataFrame(self.original_dataset['test'])
     
     self.reset_index()
+    
+  # Function to get the train, dev, and test splits (word-level)
+  def get_original_split_datasets_word(self, folder_path, train_dev_split = 0.9, first_time = False):
+    
+    dataset_types = ['train', 'test']
+    
+    self.original_dataset = {}
+    
+    self.split_dataset = {}
+    
+    for dataset_type in dataset_types:
+      
+      self.original_dataset[dataset_type] = pd.read_csv('vuamc_corpus_' + dataset_type + '.csv', encoding = 'latin-1')
+      
+      self.original_dataset[dataset_type] = self.original_dataset[dataset_type].dropna()
+      
+    if first_time:
+     
+      temp = self.get_dataframe(self.original_dataset['train'])
+      
+      temp = shuffle(temp, random_state = self.seed)
+      
+      temp.reset_index(inplace = True)
+      
+      temp.drop("index", axis = 1, inplace = True)
+
+      split_index = math.floor(len(temp) * train_dev_split)
+
+      self.split_dataset['train'] = temp[0 : split_index]
+
+      self.split_dataset['dev'] = temp[split_index : ]
+
+      self.split_dataset['test'] = self.get_dataframe(self.original_dataset['test'])
+      
+      with open(folder_path + 'train_set.pckl', 'wb') as f:
+        pickle.dump(self.split_dataset['train'], f)
+
+      with open(folder_path + 'dev_set.pckl', 'wb') as f:
+        pickle.dump(self.split_dataset['dev'], f)
   
+      with open(folder_path + 'test_set.pckl', 'wb') as f:
+        pickle.dump(self.split_dataset['test'], f)
+    
+    else:
+      
+      with open(folder_path + 'train_set.pckl', 'rb') as f:
+        self.split_dataset['train'] = pickle.load(f)
+
+      with open(folder_path + 'dev_set.pckl', 'rb') as f:
+        self.split_dataset['dev'] = pickle.load(f)
+  
+      with open(folder_path + 'test_set.pckl', 'rb') as f:
+        self.split_dataset['test'] = pickle.load(f)
+      
+    
+  # Function to get the dataframe containing word-level information
+  def get_dataframe(self, source_df):
+    
+    target_df = pd.DataFrame(columns = ['txt_id', 'sentence_id', 'word_id'])
+    
+    c = 0
+    
+    l = 0
+    
+    for index, row in source_df.iterrows():
+      
+      text_id = row['txt_id']
+      
+      sent_id = row['sentence_id']
+      
+      if isinstance(sent_id, str):
+        sent_id = re.sub("\D", "", sent_id)
+      
+      sentence_txt = row['sentence_txt']
+      
+      tokenized_sent = nltk.word_tokenize(sentence_txt)
+      
+      for i in range(len(tokenized_sent)):
+        
+        target_df.loc[c] = [self.text_id_mapping[text_id], sent_id, i]
+        
+        c += 1
+      
+      l += 1
+      
+      print(l)
+    
+    return target_df
+    
   # Function to reset the row numbering of a dataframe
   def reset_index(self):
     
