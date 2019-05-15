@@ -144,7 +144,7 @@ class DatasetPreProcessor:
       
       text_id = row['txt_id']
       
-      sent_id = row['sentence_id']
+      sent_id = str(row['sentence_id'])
       
       sentence_txt = row['sentence_txt']
       
@@ -223,8 +223,8 @@ class DatasetPreProcessor:
 
       sent_id = str(row['sentence_id'])
       
-      if (row['txt_id'], row['sentence_id']) not in self.text_sent_mapping:
-        self.text_sent_mapping[(row['txt_id'], row['sentence_id'])] = counter_1
+      if (row['txt_id'], sent_id) not in self.text_sent_mapping:
+        self.text_sent_mapping[(row['txt_id'], sent_id)] = counter_1
         counter_1 += 1
 
       if sent_id not in self.texts[row['txt_id']]:
@@ -416,7 +416,7 @@ class DatasetPreProcessor:
 
           sent_id = comb_set_slice_txt_sent_len[j][1]
           
-          sent_id = self.text_sent_mapping[(text_id, sent_id)]
+          sent_id = self.text_sent_mapping[(text_id, str(sent_id))]
 
           sent_len = comb_set_slice_txt_sent_len[j][2]
 
