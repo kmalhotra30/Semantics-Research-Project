@@ -146,16 +146,13 @@ class DatasetPreProcessor:
       
       sent_id = row['sentence_id']
       
-      if isinstance(sent_id, str):
-        sent_id = re.sub("\D", "", sent_id)
-      
       sentence_txt = row['sentence_txt']
       
       tokenized_sent = nltk.word_tokenize(sentence_txt)
       
       for i in range(len(tokenized_sent)):
         
-        target_df.loc[c] = [self.text_id_mapping[text_id], sent_id, i]
+        target_df.loc[c] = [self.text_id_mapping[text_id], self.text_sent_mapping[(text_id, sent_id)], i]
         
         c += 1
       
@@ -193,6 +190,8 @@ class DatasetPreProcessor:
     
     self.text_id_mapping = {}
     
+    self.text_sent_mapping = {}
+    
     train_corpus = pd.read_csv('vuamc_corpus_train.csv', encoding = 'latin-1')
     
     train_corpus = train_corpus.dropna()
@@ -205,9 +204,13 @@ class DatasetPreProcessor:
     
     self.text_id_mapping["-1"] = -1
     
+    self.text_sent_mapping[("-1", "-1")] = -1
+    
     counter = 0
+    
+    counter_1 = 0
       
-    for index, row in comb.iterrows():
+    for index, row in comb.iterrows(): 
 
       if row['txt_id'] not in self.texts:
 
@@ -218,13 +221,14 @@ class DatasetPreProcessor:
         self.text_id_mapping[row['txt_id']] = counter
         counter += 1
 
-      sent_id = row['sentence_id']
+      sent_id = str(row['sentence_id'])
       
-      if isinstance(sent_id, str):
-        sent_id = int(re.sub("\D", "", sent_id))
+      if (row['txt_id'], row['sentence_id']) not in self.text_sent_mapping:
+        self.text_sent_mapping[(row['txt_id'], row['sentence_id'])] = counter_1
+        counter_1 += 1
 
       if sent_id not in self.texts[row['txt_id']]:
-
+          
         self.texts[row['txt_id']][sent_id] = {}
       
       self.texts[row['txt_id']][sent_id]['token_list'] = nltk.word_tokenize(row['sentence_txt'])
@@ -253,9 +257,6 @@ class DatasetPreProcessor:
       
       sent_id = text_sent_word_id[1]
       
-      if isinstance(sent_id, str):
-        sent_id = int(re.sub("\D", "", sent_id))
-      
       word_id = text_sent_word_id[2]
       
       if isinstance(word_id, str):
@@ -263,12 +264,13 @@ class DatasetPreProcessor:
       
       label = row[1]
       
-      if isinstance(label, str):
-        label = int(re.sub("\D", "", label))
-        
-      self.texts[text_id][sent_id]['labels'][word_id - 1] = label
+      label = int(label)
       
+      self.texts[text_id][sent_id]['labels'][word_id - 1] = label
+            
     self.text_id_mapping_reverse = {v : k for k, v in self.text_id_mapping.items()}
+    
+    self.text_sent_mapping_reverse = {v : k for k, v in self.text_sent_mapping.items()}
     
   # Function to get the word embeddings
   def get_embeddings(self, word_to_index, embed_dim = 300, embed_type = 'glove', first_time = False):
@@ -310,9 +312,6 @@ class DatasetPreProcessor:
   # Function to get the context around a focus sentence   
   def get_context(self, text_id, sent_id, context_window):
     
-    if isinstance(sent_id, str):
-        sent_id = int(re.sub("\D", "", sent_id))
-    
     temp_context = {}
     
     temp_context_labels = {}
@@ -331,9 +330,11 @@ class DatasetPreProcessor:
     
     context_sent_ids_unmasked = []
     
+    (text_str, sent_str) = self.text_sent_mapping_reverse[sent_id]
+    
     sorted_sent_ids = sorted(list(self.texts[text_id]))
     
-    sent_id_idx = sorted_sent_ids.index(sent_id)
+    sent_id_idx = sorted_sent_ids.index(sent_str)
     
     for i in range(-context_window, context_window + 1):
       
@@ -414,9 +415,8 @@ class DatasetPreProcessor:
           text_id = comb_set_slice_txt_sent_len[j][0]
 
           sent_id = comb_set_slice_txt_sent_len[j][1]
-
-          if isinstance(sent_id, str):
-            sent_id = int(re.sub("\D", "", sent_id))
+          
+          sent_id = self.text_sent_mapping[(text_id, sent_id)]
 
           sent_len = comb_set_slice_txt_sent_len[j][2]
 
@@ -426,7 +426,7 @@ class DatasetPreProcessor:
 
             if text_id not in self.elmo_embed_dict:
               self.elmo_embed_dict[text_id] = {}
-
+            
             if sent_id not in self.elmo_embed_dict[text_id]:
               self.elmo_embed_dict[text_id][sent_id] = {}
 
@@ -439,7 +439,7 @@ class DatasetPreProcessor:
 
               elmo_embedding = torch.zeros(1, 1024)
 
-              self.elmo_embed_dict[text_id][sent_id][k]['glove_elmo'] = list(torch.cat((glove_embedding, elmo_embedding), dim = 1).detach().numpy().squeeze()) # (1, 1324)
+              self.elmo_embed_dict[text_id][sent_id][k]['glove_elmo'] = torch.cat((glove_embedding, elmo_embedding), dim = 1) # (1, 1324)
 
               #self.elmo_embed_dict[text_id][sent_id][k]['elmo'] = elmo_embedding # (1, 1024)
 
@@ -453,7 +453,7 @@ class DatasetPreProcessor:
 
               elmo_embedding = comb_set_slice_embeddings['elmo_representations'][0][j][k].view(1, 1024)
 
-              self.elmo_embed_dict[text_id][sent_id][k]['glove_elmo'] = list(torch.cat((glove_embedding, elmo_embedding), dim = 1).detach().numpy().squeeze()) # (1, 1324)
+              self.elmo_embed_dict[text_id][sent_id][k]['glove_elmo'] = torch.cat((glove_embedding, elmo_embedding), dim = 1) # (1, 1324)
 
               #self.elmo_embed_dict[text_id][sent_id][k]['elmo'] = elmo_embedding # (1, 1024)
 
@@ -464,7 +464,7 @@ class DatasetPreProcessor:
       self.elmo_embed_dict["-1"] = {}
       self.elmo_embed_dict["-1"][-1] = {}
       self.elmo_embed_dict["-1"][-1][-1] = {}
-      self.elmo_embed_dict["-1"][-1][-1]["glove_elmo"] = list(torch.zeros(1, 1324).detach().numpy().squeeze())
+      self.elmo_embed_dict["-1"][-1][-1]["glove_elmo"] = torch.zeros(1, 1324)
       #self.elmo_embed_dict["-1"][-1][-1]["elmo"] = torch.zeros(1, 1024)
       #self.elmo_embed_dict["-1"][-1][-1]["glove"] = torch.zeros(1, 300)
       self.elmo_embed_dict["-1"][-1][-1]["word"] = '<PAD>'
