@@ -27,11 +27,11 @@ class DatasetPreProcessor:
     
     for dataset_type in ['train', 'test']:
     
-      train_corpus = pd.read_csv('vuamc_corpus_' + dataset_type + '.csv', encoding = 'latin-1')
+      train_corpus = pd.read_csv('vuamc_corpus_' + dataset_type + '.csv', encoding = 'utf-8')
 
       train_corpus = train_corpus.dropna()
 
-      train_corpus_all_pos_tokens = pd.read_csv('all_pos_tokens_' + dataset_type + '.csv', header = None, encoding = 'latin-1')
+      train_corpus_all_pos_tokens = pd.read_csv('all_pos_tokens_' + dataset_type + '.csv', header = None, encoding = 'utf-8')
 
       for index, row in train_corpus.iterrows():
 
@@ -328,7 +328,7 @@ class DatasetPreProcessor:
     
     for dataset_type in dataset_types:
       
-      self.original_dataset[dataset_type] = pd.read_csv('vuamc_corpus_' + dataset_type + '.csv', encoding = 'latin-1')
+      self.original_dataset[dataset_type] = pd.read_csv('vuamc_corpus_' + dataset_type + '.csv', encoding = 'utf-8')
       
       self.original_dataset[dataset_type] = self.original_dataset[dataset_type].dropna()
       
