@@ -198,7 +198,7 @@ class DatasetPreProcessor:
         comb_set_slice_sentences = []
 
         for index, row in comb_set_slice.iterrows():
-
+          
           tokenized_sent = list(map(self.pre_process_word, nltk.word_tokenize(row['sentence_txt'])))
 
           comb_set_slice_txt_sent_len.append([row['txt_id'], str(row['sentence_id']), len(tokenized_sent), tokenized_sent])
@@ -282,6 +282,141 @@ class DatasetPreProcessor:
             
             self.elmo_embed_dict[text_id][sent_id][word_id]['glove_elmo'].requires_grad = False
    
+  
+  def get_elmo_embedding_dict_wider_context(self, folder_path, context_window = 2, first_time = False):
+    
+    if first_time:
+      
+      self.elmo_embed_dict_wider_context = {}
+
+      comb_set = pd.concat([self.original_dataset['train'], self.original_dataset['test']], axis = 0, ignore_index = True)
+
+      comb_set_rows = len(comb_set)
+
+      batch_size = 64
+
+      num_iterations = math.ceil(comb_set_rows / batch_size)
+
+      options_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_options.json"
+
+      weight_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5"
+
+      elmo = Elmo(options_file, weight_file, 1, dropout = 0)
+
+      for x in range(num_iterations):
+
+        start_index = x * batch_size
+
+        end_index = min((x + 1) * batch_size, comb_set_rows)
+
+        comb_set_slice = pd.DataFrame(comb_set[start_index : end_index])
+
+        comb_set_slice_txt_sent_len = []
+
+        comb_set_slice_sentences = []
+
+        for index, row in comb_set_slice.iterrows():
+          
+          context, _, focus_sentence_index, _ = self.get_context(row['txt_id'], self.text_sent_mapping[(row['txt_id'], str(row['sentence_id']))], context_window = context_window)
+          
+          tokenized_sent_len = []
+          
+          tokenized_sent = []
+          
+          for context_sentence in context['unmasked']:
+            
+            tokenized_sent_len.append(len(context_sentence))
+            
+            tokenized_sent.extend(context_sentence)
+          
+          offset = 0
+          
+          for i in range(len(tokenized_sent_len)):
+            
+            if i == focus_sentence_index:
+              break
+              
+            offset += tokenized_sent_len[i]
+            
+          comb_set_slice_txt_sent_len.append([row['txt_id'], str(row['sentence_id']), len(context['unmasked'][focus_sentence_index]), context['unmasked'][focus_sentence_index], offset])
+
+          comb_set_slice_sentences.append(tokenized_sent)
+
+        comb_set_slice_char_ids = batch_to_ids(comb_set_slice_sentences)
+
+        comb_set_slice_embeddings = elmo(comb_set_slice_char_ids)
+
+        for j in range(len(comb_set_slice_txt_sent_len)):
+
+          text_id = comb_set_slice_txt_sent_len[j][0]
+
+          sent_id = comb_set_slice_txt_sent_len[j][1]
+          
+          sent_id = self.text_sent_mapping[(text_id, sent_id)]
+
+          sent_len = comb_set_slice_txt_sent_len[j][2]
+
+          tokenized_sent = comb_set_slice_txt_sent_len[j][3]
+          
+          offset = comb_set_slice_txt_sent_len[j][4]
+
+          for k in range(-1, sent_len):
+
+            if text_id not in self.elmo_embed_dict_wider_context:
+              self.elmo_embed_dict_wider_context[text_id] = {}
+            
+            if sent_id not in self.elmo_embed_dict_wider_context[text_id]:
+              self.elmo_embed_dict_wider_context[text_id][sent_id] = {}
+
+            if k not in self.elmo_embed_dict_wider_context[text_id][sent_id]:
+              self.elmo_embed_dict_wider_context[text_id][sent_id][k] = {}
+
+            if k == -1:
+
+              glove_embedding = self.embedding(torch.LongTensor([0]))
+
+              elmo_embedding = torch.zeros(1, 1024)
+              
+              embedding_concat = torch.cat((glove_embedding, elmo_embedding), dim = 1)
+
+              self.elmo_embed_dict_wider_context[text_id][sent_id][k]['glove_elmo'] = embedding_concat # (1, 1324)
+
+              self.elmo_embed_dict_wider_context[text_id][sent_id][k]['word'] = '<PAD>'
+
+            else:
+
+              glove_embedding = self.embedding(torch.LongTensor([self.w2i[tokenized_sent[k]]]))
+
+              elmo_embedding = comb_set_slice_embeddings['elmo_representations'][0][j][offset + k].view(1, 1024)
+              
+              embedding_concat = torch.cat((glove_embedding, elmo_embedding), dim = 1)
+
+              self.elmo_embed_dict_wider_context[text_id][sent_id][k]['glove_elmo'] = embedding_concat # (1, 1324)
+
+              self.elmo_embed_dict_wider_context[text_id][sent_id][k]['word'] = tokenized_sent[k]
+
+      self.elmo_embed_dict_wider_context["-1"] = {}
+      self.elmo_embed_dict_wider_context["-1"][-1] = {}
+      self.elmo_embed_dict_wider_context["-1"][-1][-1] = {}
+      self.elmo_embed_dict_wider_context["-1"][-1][-1]["glove_elmo"] = torch.zeros(1, 1324)
+      self.elmo_embed_dict_wider_context["-1"][-1][-1]["word"] = '<PAD>'
+      
+      with open(folder_path + self.corpus_name + "_elmo_dict_wider_context.pckl", 'wb') as f:
+         pickle.dump(self.elmo_embed_dict_wider_context, f)
+        
+    else:
+      
+      with open(folder_path + self.corpus_name + "_elmo_dict_wider_context.pckl", 'rb') as f:
+          self.elmo_embed_dict_wider_context = pickle.load(f)
+       
+      for text_id in self.elmo_embed_dict_wider_context.keys():
+        
+        for sent_id in self.elmo_embed_dict_wider_context[text_id].keys():
+          
+          for word_id in self.elmo_embed_dict_wider_context[text_id][sent_id].keys():
+            
+            self.elmo_embed_dict_wider_context[text_id][sent_id][word_id]['glove_elmo'].requires_grad = False
+            
   def get_embeddings(self, folder_path, embed_dim = 300, embed_type = 'glove', first_time = False):
 
     if first_time:
