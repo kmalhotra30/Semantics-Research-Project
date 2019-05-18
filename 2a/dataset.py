@@ -145,13 +145,13 @@ class DatasetPreProcessor:
     
     for i in range(-context_window, context_window + 1):
       
-      sent_id_str = dpp.text_sent_mapping_reverse[sorted_sent_ids[sent_id_idx + i]][1]
-      
       if sent_id_idx + i < 0 or sent_id_idx + i >= len(sorted_sent_ids):
         
         pass
         
       else:
+      
+      	sent_id_str = dpp.text_sent_mapping_reverse[sorted_sent_ids[sent_id_idx + i]][1]
         
         if sent_id_idx + i != sent_id_idx:
           temp_context_masked.append(self.texts[text_str][sent_id_str]['token_list'])
