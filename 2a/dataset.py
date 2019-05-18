@@ -131,11 +131,21 @@ class DatasetPreProcessor:
     
     (text_str, sent_str) = self.text_sent_mapping_reverse[sent_id]
     
-    sorted_sent_ids = sorted(list(self.texts[text_str]))
+    sent_ids = list(self.texts[text_str])
     
-    sent_id_idx = sorted_sent_ids.index(sent_str)
+    sent_ids_mapping = [self.text_sent_mapping[(text_str, k)] for k in sent_ids]
+    
+    sorted_sent_ids = sorted(sent_ids_mapping)
+    
+    #print(sorted_sent_ids)
+    
+    sent_id_idx = sorted_sent_ids.index(self.text_sent_mapping[(text_str, sent_str)])
+    
+    #print(sent_id_idx)
     
     for i in range(-context_window, context_window + 1):
+      
+      sent_id_str = dpp.text_sent_mapping_reverse[sorted_sent_ids[sent_id_idx + i]][1]
       
       if sent_id_idx + i < 0 or sent_id_idx + i >= len(sorted_sent_ids):
         
@@ -144,15 +154,15 @@ class DatasetPreProcessor:
       else:
         
         if sent_id_idx + i != sent_id_idx:
-          temp_context_masked.append(self.texts[text_str][sorted_sent_ids[sent_id_idx + i]]['token_list'])
-          temp_context_labels_masked.append(self.texts[text_str][sorted_sent_ids[sent_id_idx + i]]['labels'])
-          context_sent_ids_masked.append(sorted_sent_ids[sent_id_idx + i])
+          temp_context_masked.append(self.texts[text_str][sent_id_str]['token_list'])
+          temp_context_labels_masked.append(self.texts[text_str][sent_id_str]['labels'])
+          context_sent_ids_masked.append(sent_id_str)
         
-        temp_context_unmasked.append(self.texts[text_str][sorted_sent_ids[sent_id_idx + i]]['token_list'])
+        temp_context_unmasked.append(self.texts[text_str][sent_id_str]['token_list'])
         
-        temp_context_labels_unmasked.append(self.texts[text_str][sorted_sent_ids[sent_id_idx + i]]['labels'])
+        temp_context_labels_unmasked.append(self.texts[text_str][sent_id_str]['labels'])
         
-        context_sent_ids_unmasked.append(sorted_sent_ids[sent_id_idx + i])
+        context_sent_ids_unmasked.append(sent_id_str)
         
         if sent_id_idx + i == sent_id_idx:
           focus_sentence_index = len(temp_context_unmasked) - 1
@@ -471,11 +481,11 @@ class DatasetPreProcessor:
      
       temp = self.get_dataframe(self.original_dataset['train'])
       
-      temp = shuffle(temp, random_state = self.seed)
+      #temp = shuffle(temp, random_state = self.seed)
       
-      temp.reset_index(inplace = True)
+      #temp.reset_index(inplace = True)
       
-      temp.drop("index", axis = 1, inplace = True)
+      #temp.drop("index", axis = 1, inplace = True)
 
       split_index = math.floor(len(temp) * train_dev_split)
 
