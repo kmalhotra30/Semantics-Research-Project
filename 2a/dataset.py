@@ -151,7 +151,7 @@ class DatasetPreProcessor:
         
       else:
         
-        sent_id_str = dpp.text_sent_mapping_reverse[sorted_sent_ids[sent_id_idx + i]][1]
+        sent_id_str = self.text_sent_mapping_reverse[sorted_sent_ids[sent_id_idx + i]][1]
         
         if sent_id_idx + i != sent_id_idx:
           temp_context_masked.append(self.texts[text_str][sent_id_str]['token_list'])
@@ -477,7 +477,7 @@ class DatasetPreProcessor:
       
       self.original_dataset[dataset_type] = self.original_dataset[dataset_type].dropna()
       
-    if first_time:
+   if first_time:
      
       temp = self.get_dataframe(self.original_dataset['train'])
       
