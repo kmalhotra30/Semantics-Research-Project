@@ -1,17 +1,3 @@
-# Importing the Libraries
-import pandas as pd
-import numpy as np
-from sklearn.utils import shuffle
-import nltk
-import math
-import re
-import torchnlp
-import torch
-from torchnlp.word_to_vector import GloVe
-import pickle
-from allennlp.modules.elmo import Elmo, batch_to_ids
-nltk.download('punkt')
-
 class DatasetPreProcessorGao:
     
     def __init__(self, seed = 42):
@@ -119,11 +105,11 @@ class DatasetPreProcessorGao:
     
         sorted_sent_ids = sorted(sent_ids_mapping)
     
-        print(sorted_sent_ids)
+        #print(sorted_sent_ids)
     
         sent_id_idx = sorted_sent_ids.index(self.text_sent_mapping[(text_str, sent_str)])
     
-        print(sent_id_idx)
+        #print(sent_id_idx)
     
         for i in range(-context_window, context_window + 1):
       
