@@ -275,7 +275,7 @@ if __name__ == "__main__":
 	group.add_argument("--batch_size", type=int, default=64)
 	group.add_argument("--repetitions", type=int, default=1)
 	group.add_argument("--lr", type=float, default=0.005)
-	group.add_argument("--hidden_size", type=int, default=300)
+	group.add_argument("--hidden_size", type=int, default=100)
 	group.add_argument("--num_layers", type=int, default=1)
 	group.add_argument("--dropout1", type=float, default=0.5)
 	group.add_argument("--dropout2", type=float, default=0.0)
