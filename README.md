@@ -4,7 +4,7 @@ This repository contains the code for the Research Project of the course Statist
 # Executing the code :
 
 ### 
-Note : Information about Elmo weights and options can be viewed at (https://github.com/allenai/allennlp/blob/master/tutorials/how_to/elmo.md)
+Note : Information about Elmo weights and options can be viewed at (https://github.com/allenai/allennlp/blob/master/tutorials/how_to/elmo.md) Elmo weights and option files have not been uploaded due to size constraints.
 - main.py : This file accepts the following flags :- 
     - --w2i_file : Location of word to index json file.
     - --i2w_file : Location of index to word json file.
