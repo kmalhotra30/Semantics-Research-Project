@@ -13,7 +13,7 @@ Note : Information about Elmo weights and options can be viewed at (https://gith
     - --elmo_options : Name of options file of ELMO. 
     - --train_steps : Number of batch iterations.
     - --batch_size : Batch size.
-    - --model_type : Can be either BL3_LSTM,HAN_LSTM,VA_LSTM for baseline 3, Vanilla Attention and Hierarchical Attention.
+    - --model_type : Can be either `BL3_LSTM`,`HAN_LSTM`,`VA_LSTM` for baseline 3, Vanilla Attention and Hierarchical Attention.
     - --repetitions : Number of times model is to be trained and evaluated.
     - --context_window : Can be 0,1,2,3 etc.
     - --sort_data : 1 to sort data for faster training and 0 otherwise
