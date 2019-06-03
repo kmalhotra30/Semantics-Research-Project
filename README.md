@@ -9,7 +9,7 @@ Note : Information about Elmo weights and options can be viewed at (https://gith
     - --w2i_file : Location of word to index json file.
     - --i2w_file : Location of index to word json file.
     - --glove_filename : Name of the pickle file containing glove embeddings.
-    - --elmo_weights : Name of Weights file of ELMO.  for baseline 3, vanilla attention and Hierarchical Attention
+    - --elmo_weights : Name of Weights file of ELMO. 
     - --elmo_options : Name of options file of ELMO. 
     - --train_steps : Number of batch iterations.
     - --batch_size : Batch size.
