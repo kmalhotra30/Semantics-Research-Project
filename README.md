@@ -8,7 +8,7 @@ Note : Information about Elmo weights and options can be viewed at (https://gith
 - main.py : This file accepts the following flags :- 
     - --w2i_file : Location of word to index json file.
     - --i2w_file : Location of index to word json file.
-    - --glove_filename : Name of the pickle file con'HAN_LSTMt,'VA_LSTMa for baseline 3, vanilla attention and Hierarchical Attentionining glove embeddings
+    - --glove_filename : Name of the pickle file containing glove embeddings.
     - --elmo_weights : Name of Weights file of ELMO.  for baseline 3, vanilla attention and Hierarchical Attention
     - --elmo_options : Name of options file of ELMO. 
     - --train_steps : Number of batch iterations.
