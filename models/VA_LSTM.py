@@ -12,6 +12,7 @@ import torch
 import logging
 import torch.nn as nn
 import torch.nn.functional as F
+from copy import deepcopy
 
 from allennlp.nn.util import masked_softmax
 
@@ -80,7 +81,8 @@ class VA_LSTM(Model):
         mask_length = batch.lengths.view(shape_mask)
 
         #mask_attention is a tensor which will store the binary masks (0 or 1)
-        mask_attention = torch.empty(int(batch_size/context_size), context_size*sentence_length).cuda()
+        device = 'cuda' if torch.cuda.is_available() else "cpu"
+        mask_attention = torch.empty(int(batch_size/context_size), context_size*sentence_length).to(device)
 
         for j in range(int(batch_size/context_size)):
 
@@ -99,13 +101,20 @@ class VA_LSTM(Model):
         attention_activation = self.attention_linear(attention_input_encoding).squeeze()
 
         #Masking the activations before softmax
-        masked_attention_activation = attention_activation * mask_attention
+
+        #Changes by Karan
+
+        mask_attention = mask_attention.to(torch.uint8)
+
+        masked_attention_activation = attention_activation
+
+        masked_attention_activation[~mask_attention] = float("-inf")
 
         #Applying softmax non linearity
         masked_attention_normalized = F.softmax(masked_attention_activation, dim = 1)
-        
+
         #Trial
-        masked_attention_normalized = masked_attention_normalized * mask_attention
+        #masked_attention_normalized = masked_attention_normalized * mask_attention
 
         #Multiplying attention weights with  Bi-LSTM Activations
 

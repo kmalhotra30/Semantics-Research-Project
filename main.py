@@ -3,7 +3,7 @@ This file implements metaphor detection for the VUA corpus.
 
 Example Usage
 -------------
-python3 main.py 
+python3 main.py
 
 Author: Verna Dankers
 """
@@ -39,8 +39,8 @@ def main(args, metric, rep):
         model = models.BL3_LSTM(**args)
     elif model_choice == "HAN_LSTM":
 
-        model = models.HAN_LSTM(**args)  
-        
+        model = models.HAN_LSTM(**args)
+
     elif model_choice == "VA_LSTM":
 
         model = models.VA_LSTM(**args)
@@ -79,8 +79,9 @@ if __name__ == "__main__":
     group.add_argument("--dropout3", type=float, default=0.1)
     group.add_argument("--output_name", type=str, default="model")
     group.add_argument("--meta_target_type", default="multiclass")
-    group.add_argument("--context_window", type=int, default=1)
-    group.add_argument("--sort_data",type=int,default=1)
+    group.add_argument("--context_window", type=int, default=0)
+    group.add_argument("--sort_data",type=int, default=1)
+    group.add_argument("--use_elmo", type=int, default=0)
 
     # Arguments related to the metaphor data
     group.add_argument("--meta_folder", default="VUAsequence")
@@ -90,7 +91,7 @@ if __name__ == "__main__":
 
     args = vars(parser.parse_args())
 
-   
+
 
     if torch.cuda.is_available():
         torch.cuda.set_device(args["device"])

@@ -34,7 +34,7 @@ class BL3_LSTM(Model):
             dropout2 (float): dropout in RNN
             dropout3 (float): dropout on hidden state of RNN to linear layer
         """
-        super(BL3_LSTM, self).__init__(glove_filename, elmo_weights, elmo_options)
+        super(BL3_LSTM, self).__init__(glove_filename, elmo_weights, elmo_options, use_elmo=kwargs['use_elmo'])
         self.name = "BL3_LSTM"
         self.context_window = context_window
         self.hidden_size = hidden_size
@@ -63,6 +63,7 @@ class BL3_LSTM(Model):
         shape = (int(batch_size/context_size), context_size, sentence_length, self.hidden_size * 2)
 
         input_encoding = input_encoding.view(shape)
-        input_encoding = input_encoding[:, batch.focus_positions, :, :][:, 0, :, :]
+        #input_encoding = input_encoding[:, batch.focus_positions, :, :][:, 0, :, :]
+        input_encoding = input_encoding[range(len(input_encoding)), batch.focus_positions]
         unnormalized_output = self.output_metaphor(input_encoding)
         return torch.log_softmax(unnormalized_output, dim=-1)
