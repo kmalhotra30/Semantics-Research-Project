@@ -103,7 +103,7 @@ class HAN_LSTM(Model):
         #Masking the activations before softmax
         # Changes by Karan
 
-        mask_attention = mask_attention.to(torch.uint8)
+        mask_attention = mask_attention.to(torch.bool)
 
         masked_attention_activation = attention_activation
 

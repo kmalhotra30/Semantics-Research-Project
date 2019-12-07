@@ -104,7 +104,7 @@ class VA_LSTM(Model):
 
         #Changes by Karan
 
-        mask_attention = mask_attention.to(torch.uint8)
+        mask_attention = mask_attention.to(torch.bool)
 
         masked_attention_activation = attention_activation
 
